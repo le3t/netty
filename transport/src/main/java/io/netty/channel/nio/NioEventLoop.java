@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * {@link SingleThreadEventLoop} implementation which register the {@link Channel}'s to a
  * {@link Selector} and so does the multi-plexing of these in the event loop.
- *
+ * 对应socket变成中的Thread，不想阻塞主线程使用的类
  */
 public final class NioEventLoop extends SingleThreadEventLoop {
 
@@ -431,9 +431,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * 对应 while(true)
+     */
     @Override
     protected void run() {
         int selectCnt = 0;
+        //也是死循环
         for (;;) {
             try {
                 int strategy;
@@ -447,6 +451,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // fall-through to SELECT since the busy-wait is not supported with NIO
 
                     case SelectStrategy.SELECT:
+                        //对应的accept
                         long curDeadlineNanos = nextScheduledTaskDeadlineNanos();
                         if (curDeadlineNanos == -1L) {
                             curDeadlineNanos = NONE; // nothing on the calendar
@@ -647,6 +652,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             final Object a = k.attachment();
 
             if (a instanceof AbstractNioChannel) {
+                //处理每一个连接
                 processSelectedKey(k, (AbstractNioChannel) a);
             } else {
                 @SuppressWarnings("unchecked")
